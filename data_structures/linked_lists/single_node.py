@@ -1,9 +1,9 @@
 # single linked node
 
 class Node: 
-    def __init__(self, data): 
+    def __init__(self, data, next=None): 
         self.data = data 
-        self.next = None
+        self.next = next
 
 # UTILITY FUNCTIONS 
 # Function to insert a node at the 
@@ -29,6 +29,7 @@ def print_list(node):
     while (node != None): 
         print(node.data, end = " ") 
         node = node.next
+    print()
 
 
 # Function to return elements in linked list as python list
@@ -39,3 +40,9 @@ def get_value_list(node):
         node = node.next
 
     return values
+
+
+if __name__ == '__main__':
+
+    ll = push_list(range(10))
+    print_list(ll)
