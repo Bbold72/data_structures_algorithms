@@ -107,42 +107,150 @@ def merge_sort(A: List[int]) -> None:
             j += 1
             k += 1
 
-### TODO
-def quick_sort(A: List[int], low: int, high: int) -> None:
-    def partition(A: List[int], low: int, high: int) -> None:
-        pivot_index = random.randint(low, high)
-        pivot_value = A[pivot_index]
 
-        # less_idx - everything to left is smaller than pivot
-        # greater_idx - everyting to right is larger than pivot
-        # equal_idx - [less_idx, equal_idx) is equal to pivot
-        less_idx, equal_idx, greater_idx = 0, 0, len(A) - 1
+def merge_sort2(A: List[int], bottom_up: bool=False) -> None:
 
-        while equal_idx < greater_idx:
-            if A[equal_idx] < pivot_value:
-                A[less_idx], A[equal_idx] = A[equal_idx], A[less_idx]
-                less_idx += 1
-                equal_idx += 1
-            elif A[equal_idx] == pivot_value:
-                equal_idx += 1
-            else:  # larger than pivot 
-                A[equal_idx], A[greater_idx] = A[greater_idx], A[equal_idx]
-                greater_idx -= 1
+    def merge(lo: int, mid: int, hi: int) -> None:
+        i, j = lo, mid + 1
+
+        # copy A into aux
+        aux = A.copy() 
+
+        k = lo 
+        while k <= hi:
+            if i > mid:           # exhausted first half of array
+                A[k] = aux[j]
+                j += 1
+            elif j > hi:          # exhausted second half of array
+                A[k] = aux[i]
+                i += 1
+            elif aux[i] < aux[j]:
+                A[k] = aux[i]
+                i += 1
+            else:
+                A[k] = aux[j]
+                j += 1
+            k += 1
+
+    def sort(lo: int, hi: int) -> None:
+        if hi <= lo:
+            return
+
+        mid = lo + (hi - lo) // 2
+        sort(lo, mid)
+        sort(mid+1, hi)
+        merge(lo, mid, hi)
+
+    def sort_bottom_up() -> None:
+        N = len(A)
+
+        sz = 1
+        while sz < N:
+            lo = 0
+            while lo < N - sz:
+                merge(lo, lo+sz-1, min([lo + sz + sz-1, N-1]))
+                lo += sz+sz
+            sz = sz+sz
+
+    if bottom_up:
+        sort_bottom_up() 
+    else: 
+        sort(0, len(A)-1)
+
+
+def partition(A: List[int], lo: int, hi: int) -> None:
+    i = lo + 1
+    j = hi 
+    pivot_value = A[lo]
+
+    while True:
+        # find left item to swap
+        while A[i] < pivot_value:
+            i += 1
+            if i > hi:
+                break
         
-        # return where partition was done
-        return less_idx, equal_idx
+        # find right item to swap
+        while A[j] > pivot_value:
+            j -= 1
+            if j == lo:
+                break
+        
+        # check if pointers cross 
+        if i >= j:
+            break 
+
+        # swap i and j
+        A[i], A[j] = A[j], A[i]
+
+    # swap partitioning item
+    A[lo], A[j] = A[j], A[lo]
+
+    # correct place in array for partition
+    return j
     
-    if low < high:
-        # Find pivot element such that
-        # element smaller than pivot are on the left
-        # element greater than pivot are on the right
-        less_idx, high_idx = partition(A, low, high)
-  
-        # Recursive call on the left of pivot
-        quick_sort(A, low, less_idx)
-  
-        # Recursive call on the right of pivot
-        quick_sort(A, high_idx, high)
+
+
+def quick_sort(A: List[int]) -> None:
+
+    def sort(lo: int, hi: int) -> None:
+        if lo >= hi:
+            return
+        k = partition(A, lo, hi)
+        sort(lo, k-1)
+        sort(k+1, hi)
+
+    random.shuffle(A)
+    sort(0, len(A)-1)
+
+
+def quick_select(A: List[int], k: int) -> int:
+    ''' 
+    return kth largest
+    '''
+    random.shuffle(A)
+    lo, hi = 0, len(A) - 1
+    # 1st smallest is 0 index, 2nd smallest is 1 index, ...
+    k -= 1   
+
+    while lo < hi:
+        i = partition(A, lo, hi)
+        if i > k:
+            hi = i - 1
+        elif i < k:
+            lo = i + 1
+        else:
+            return A[i]
+
+    return A[lo]
+
+
+def quick_sort_3way(A: List[int]) -> None: 
+
+    def partition3way(lo: int, hi: int) -> None:
+        if lo >= hi:
+            return
+        lt, gt = lo, hi 
+        pivot_value = A[lo]
+        i = lo + 1
+
+        while i <= gt:
+            if A[i] < pivot_value:
+                A[i], A[lt] = A[lt], A[i]
+                i += 1
+                lt += 1
+            elif A[i] > pivot_value:
+                A[i], A[gt] = A[gt], A[i]
+                gt -= 1
+            # i equal to pivot
+            else:
+                i += 1
+        
+        partition3way(lo, lt-1)
+        partition3way(gt+1, hi)
+
+    random.shuffle(A)
+    partition3way(0, len(A) - 1)
 
 
 def heap_sort(A: List[int]) -> None:
@@ -204,12 +312,39 @@ if __name__ == '__main__':
     merge_sort(A)
     print(A)
 
-    print('\Quick Sort:')
+
+    print('\nMerge Sort V2:')
     A = make_example() 
-    quick_sort(A, 0, len(A)-1)
+    merge_sort2(A)
     print(A)
 
-    print('\Heap Sort:')
+
+    print('\nBottom Up Merge Sort:')
+    A = make_example() 
+    merge_sort2(A, bottom_up=True)
+    print(A)
+
+
+    print('\nQuick Sort:')
+    A = [4, 1, 10, 3, 2, 11, 0, 5, 9, 8, 6, 15]
+    quick_sort(A)
+    print(A)
+
+
+    print('\nQuick Select:')
+    A = [4, 1, 10, 3, 2, 11, 0, 5, 9, 8, 6, 15]
+    print('1st Smallest: ', quick_select(A, 1))
+    print('8th Smallest: ', quick_select(A, 8))
+    print('12th Smallest: ', quick_select(A, 12))
+
+
+    print('\n3-Way Quick Sort :')
+    A = make_example() 
+    quick_sort_3way(A)
+    print(A)
+
+
+    print('\nHeap Sort:')
     A = make_example() 
     heap_sort(A)
     print(A)
